@@ -1,151 +1,172 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
+import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const SpaceTravelBooking = () => {
-  const [departureDate, setDepartureDate] = useState("");
-  const [returnDate, setReturnDate] = useState("");
-  const [fromLocation, setFromLocation] = useState("Earth");
-  const [destination, setDestination] = useState("Space Station Alpha");
-  const [seatClass, setSeatClass] = useState("Economy");
-  const [roomType, setRoomType] = useState("Standard");
-  const [numTravelers, setNumTravelers] = useState(1);
+const destinations = ["International Space Station", "Lunar Hotel", "Mars Colony"];
+const seatClasses = ["Economy", "Luxury", "VIP Zero-Gravity Experience"];
+const packages = ["Standard Package", "Premium Package", "Ultimate Space Experience"];
+const hotels = ["Orbital Space Inn", "Lunar Resort", "Mars Haven"];
+
+export default function SpaceTravelBooking() {
+  const [trip, setTrip] = useState({
+    departureDate: "",
+    returnDate: "",
+    destination: "",
+    seatClass: "",
+    package: "",
+    hotel: ""
+  });
+
+  const [errors, setErrors] = useState({});
   const [bookings, setBookings] = useState([]);
-  const [recommendedAccommodations, setRecommendedAccommodations] = useState([]);
 
-  const destinations = ["Space Station Alpha", "Lunar Hotel", "Mars Colony"];
-  const seatClasses = ["Economy", "Luxury", "VIP Zero-Gravity"];
-  const roomTypes = ["Standard", "Suite", "Presidential"];
-  const accommodations = {
-    "Space Station Alpha": ["Alpha Suites", "Orbital Haven"],
-    "Lunar Hotel": ["Moonlight Resort", "Lunar Base Inn"],
-    "Mars Colony": ["Red Planet Habitat", "Martian Retreat"]
+  const validate = () => {
+    let newErrors = {};
+    if (!trip.departureDate) newErrors.departureDate = "Departure date is required.";
+    if (!trip.returnDate) newErrors.returnDate = "Return date is required.";
+    if (!trip.destination) newErrors.destination = "Please select a destination.";
+    if (!trip.seatClass) newErrors.seatClass = "Please select a seat class.";
+    if (!trip.package) newErrors.package = "Please select a travel package.";
+    if (!trip.hotel) newErrors.hotel = "Please select accommodation.";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
-
-  useEffect(() => {
-    setRecommendedAccommodations(accommodations[destination] || []);
-  }, [destination]);
 
   const handleBooking = () => {
-    if (!departureDate) {
-      alert("Please select a departure date.");
-      return;
-    }
-    if (!returnDate) {
-      alert("Please select a return date.");
-      return;
-    }
-    if (new Date(departureDate) < new Date()) {
-      alert("Departure date cannot be in the past.");
-      return;
-    }
-    if (new Date(returnDate) < new Date(departureDate)) {
-      alert("Return date cannot be before departure date.");
-      return;
-    }
-    if (!destination || !fromLocation) {
-      alert("Please select both departure and destination locations.");
-      return;
-    }
-    if (numTravelers <= 0) {
-      alert("Number of travelers must be at least 1.");
-      return;
-    }
-    const newBooking = { departureDate, returnDate, fromLocation, destination, seatClass, roomType, numTravelers };
-    setBookings([...bookings, newBooking]);
+    if (!validate()) return;
+    setBookings([...bookings, trip]);
+    setTrip({ departureDate: "", returnDate: "", destination: "", seatClass: "", package: "", hotel: "" });
+    setErrors({});
   };
 
-  const clearBookings = () => {
-    setBookings([]);
+  const handleCancelBooking = (index) => {
+    setBookings(bookings.filter((_, i) => i !== index));
   };
 
   return (
-    <div className="p-6 space-y-6 bg-white text-black rounded-lg shadow-lg flex justify-center">
-      <div className="w-full max-w-2xl">
-        <Tabs defaultValue="book">
-          <TabsList>
-            <TabsTrigger value="book">Book Trip</TabsTrigger>
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          </TabsList>
+    <div className="p-6 space-y-6 bg-white text-black min-h-screen">
+      <h1 className="text-3xl font-bold text-center">Space Travel Booking</h1>
+      <Card className="bg-gray-100 p-6">
+        <CardContent className="space-y-4">
+          <div className="flex justify-center space-x-4 mt-6">
+            <div>
+              <Input
+                type="date"
+                className="flex-1"
+                min={new Date().toISOString().split("T")[0]}
+                value={trip.departureDate}
+                onChange={(e) => setTrip({ ...trip, departureDate: e.target.value })}
+                placeholder="Departure Date"
+              />
+              {errors.departureDate && <p className="text-red-500 text-sm">{errors.departureDate}</p>}
+            </div>
+            <div>
+              <Input
+                type="date"
+                className="flex-1"
+                min={trip.departureDate}
+                value={trip.returnDate}
+                onChange={(e) => setTrip({ ...trip, returnDate: e.target.value })}
+                placeholder="Return Date"
+              />
+              {errors.returnDate && <p className="text-red-500 text-sm">{errors.returnDate}</p>}
+            </div>
+          </div>
 
-          <TabsContent value="book">
-            <Card>
-              <CardContent className="space-y-4 p-4">
-                <h2 className="text-2xl font-bold">Schedule Your Space Trip</h2>
-                <label>Departure Date</label>
-                <Input type="date" value={departureDate} onChange={(e) => setDepartureDate(e.target.value)} />
-                <label>Return Date</label>
-                <Input type="date" value={returnDate} onChange={(e) => setReturnDate(e.target.value)} />
-                <label>Traveling From</label>
-                <Input type="text" value={fromLocation} onChange={(e) => setFromLocation(e.target.value)} />
-                <label>Destination</label>
-                <Select value={destination} onValueChange={setDestination}>
-                  <SelectTrigger>{destination}</SelectTrigger>
-                  <SelectContent>
-                    {destinations.map((dest) => (
-                      <SelectItem key={dest} value={dest}>{dest}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <label>Seat Class</label>
-                <Select value={seatClass} onValueChange={setSeatClass}>
-                  <SelectTrigger>{seatClass}</SelectTrigger>
-                  <SelectContent>
-                    {seatClasses.map((cls) => (
-                      <SelectItem key={cls} value={cls}>{cls}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <label>Room Type</label>
-                <Select value={roomType} onValueChange={setRoomType}>
-                  <SelectTrigger>{roomType}</SelectTrigger>
-                  <SelectContent>
-                    {roomTypes.map((type) => (
-                      <SelectItem key={type} value={type}>{type}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <label>Number of Travelers</label>
-                <Input type="number" min="1" value={numTravelers} onChange={(e) => setNumTravelers(parseInt(e.target.value) || 1)} />
-                <Button className="bg-blue-500 hover:bg-blue-700" onClick={handleBooking}>Book Now</Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
+          <div>
+            <Select onValueChange={(value) => setTrip({ ...trip, destination: value })}>
+              <SelectTrigger>{trip.destination || "Select Destination"}</SelectTrigger>
+              <SelectContent>
+                {destinations.map((dest) => (
+                  <SelectItem key={dest} value={dest}>
+                    {dest}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.destination && <p className="text-red-500 text-sm">{errors.destination}</p>}
+          </div>
 
-          <TabsContent value="dashboard">
-            <Card>
-              <CardContent className="space-y-4 p-4">
-                <h2 className="text-2xl font-bold">Your Bookings</h2>
-                {bookings.length === 0 ? (
-                  <p>No upcoming trips</p>
-                ) : (
-                  <>
-                    <ul className="space-y-2">
-                      {bookings.map((booking, index) => (
-                        <li key={index} className="p-2 border border-gray-300 rounded-lg">
-                          <p><strong>From:</strong> {booking.fromLocation}</p>
-                          <p><strong>To:</strong> {booking.destination}</p>
-                          <p><strong>Departure:</strong> {booking.departureDate}</p>
-                          <p><strong>Return:</strong> {booking.returnDate}</p>
-                          <p><strong>Seat Class:</strong> {booking.seatClass}</p>
-                          <p><strong>Room Type:</strong> {booking.roomType}</p>
-                          <p><strong>Travelers:</strong> {booking.numTravelers}</p>
-                        </li>
-                      ))}
-                    </ul>
-                    <Button className="bg-red-500 hover:bg-red-700 mt-4" onClick={clearBookings}>Clear Bookings</Button>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
+          <div className="grid grid-cols-3 gap-4">
+            {seatClasses.map((seat) => (
+              <Card
+                key={seat}
+                className={`p-4 cursor-pointer text-center bg-gray-300 ${trip.seatClass === seat ? 'border-2 border-blue-500' : ''}`}
+                onClick={() => setTrip({ ...trip, seatClass: seat })}
+              >
+                {seat}
+              </Card>
+            ))}
+          </div>
+          {errors.seatClass && <p className="text-red-500 text-sm">{errors.seatClass}</p>}
+
+          <div>
+            <Select onValueChange={(value) => setTrip({ ...trip, package: value })}>
+              <SelectTrigger>{trip.package || "Select Travel Package"}</SelectTrigger>
+              <SelectContent>
+                {packages.map((pkg) => (
+                  <SelectItem key={pkg} value={pkg}>
+                    {pkg}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.package && <p className="text-red-500 text-sm">{errors.package}</p>}
+          </div>
+
+          <div>
+            <Select onValueChange={(value) => setTrip({ ...trip, hotel: value })}>
+              <SelectTrigger>{trip.hotel || "Select Accommodation"}</SelectTrigger>
+              <SelectContent>
+                {hotels.map((hotel) => (
+                  <SelectItem key={hotel} value={hotel}>
+                    {hotel}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.hotel && <p className="text-red-500 text-sm">{errors.hotel}</p>}
+          </div>
+
+          <Button onClick={handleBooking} className="bg-blue-500 hover:bg-blue-600">Book Trip</Button>
+        </CardContent>
+      </Card>
+
+      {bookings.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold">Your Bookings</h2>
+          <table className="w-full border-collapse border border-gray-300 mt-4">
+            <thead>
+              <tr className="bg-gray-200">
+                <th className="border border-gray-300 p-2">Destination</th>
+                <th className="border border-gray-300 p-2">Departure</th>
+                <th className="border border-gray-300 p-2">Return</th>
+                <th className="border border-gray-300 p-2">Seat Class</th>
+                <th className="border border-gray-300 p-2">Package</th>
+                <th className="border border-gray-300 p-2">Hotel</th>
+                <th className="border border-gray-300 p-2">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bookings.map((booking, index) => (
+                <tr key={index} className="text-center">
+                  <td className="border border-gray-300 p-2">{booking.destination}</td>
+                  <td className="border border-gray-300 p-2">{booking.departureDate}</td>
+                  <td className="border border-gray-300 p-2">{booking.returnDate}</td>
+                  <td className="border border-gray-300 p-2">{booking.seatClass}</td>
+                  <td className="border border-gray-300 p-2">{booking.package}</td>
+                  <td className="border border-gray-300 p-2">{booking.hotel}</td>
+                  <td className="border border-gray-300 p-2">
+                    <Button onClick={() => handleCancelBooking(index)} className="bg-red-500 hover:bg-red-600">Cancel</Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
-};
-
-export default SpaceTravelBooking;
+}
